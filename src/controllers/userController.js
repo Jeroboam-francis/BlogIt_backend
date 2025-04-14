@@ -86,7 +86,15 @@ export const getUserProfile = async (req, res) => {
 // Update user profile
 export const updateUserProfile = async (req, res) => {
   try {
+    console.log("Request Body:", req.body);
+
     const { firstName, lastName, avatar, bio } = req.body;
+
+    if (!firstName || !lastName) {
+      return res
+        .status(400)
+        .json({ message: "First name and last name are required" });
+    }
     const userId = req.user.id;
 
     // Update user
