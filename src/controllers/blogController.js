@@ -1,5 +1,4 @@
-// backend/src/controllers/blogController.js
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -7,10 +6,10 @@ const prisma = new PrismaClient();
 export const getBlogs = async (req, res) => {
   try {
     const { category } = req.query;
-    
+
     const whereClause = {
       published: true,
-      ...(category && { category })
+      ...(category && { category }),
     };
 
     const blogs = await prisma.blog.findMany({
@@ -21,19 +20,19 @@ export const getBlogs = async (req, res) => {
             id: true,
             username: true,
             avatar: true,
-            bio: true
-          }
-        }
+            bio: true,
+          },
+        },
       },
       orderBy: {
-        updatedAt: 'desc'
-      }
+        updatedAt: "desc",
+      },
     });
 
     res.json(blogs);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -50,8 +49,8 @@ export const getBlogById = async (req, res) => {
             id: true,
             username: true,
             avatar: true,
-            bio: true
-          }
+            bio: true,
+          },
         },
         comments: {
           include: {
@@ -59,40 +58,40 @@ export const getBlogById = async (req, res) => {
               select: {
                 id: true,
                 username: true,
-                avatar: true
-              }
-            }
+                avatar: true,
+              },
+            },
           },
           orderBy: {
-            createdAt: 'desc'
-          }
+            createdAt: "desc",
+          },
         },
         _count: {
           select: {
-            likes: true
-          }
-        }
-      }
+            likes: true,
+          },
+        },
+      },
     });
 
     if (!blog) {
-      res.status(404).json({ message: 'Blog not found' });
+      res.status(404).json({ message: "Blog not found" });
       return;
     }
 
     // Check if the current user has liked this blog
     let hasLiked = false;
-    
+
     if (req.user) {
       const like = await prisma.like.findUnique({
         where: {
           userId_blogId: {
             userId: req.user.id,
-            blogId: parseInt(id)
-          }
-        }
+            blogId: parseInt(id),
+          },
+        },
       });
-      
+
       hasLiked = !!like;
     }
 
@@ -100,18 +99,19 @@ export const getBlogById = async (req, res) => {
       ...blog,
       likesCount: blog._count.likes,
       hasLiked,
-      _count: undefined
+      _count: undefined,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
 // Create new blog
 export const createBlog = async (req, res) => {
   try {
-    const { title, excerpt, content, featuredImage, category, published } = req.body;
+    const { title, excerpt, content, featuredImage, category, published } =
+      req.body;
 
     const blog = await prisma.blog.create({
       data: {
@@ -122,15 +122,15 @@ export const createBlog = async (req, res) => {
         category,
         published: published || false,
         author: {
-          connect: { id: req.user.id }
-        }
-      }
+          connect: { id: req.user.id },
+        },
+      },
     });
 
     res.status(201).json(blog);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -138,21 +138,22 @@ export const createBlog = async (req, res) => {
 export const updateBlog = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, excerpt, content, featuredImage, category, published } = req.body;
+    const { title, excerpt, content, featuredImage, category, published } =
+      req.body;
 
     // Check if blog exists
     const blog = await prisma.blog.findUnique({
-      where: { id: parseInt(id) }
+      where: { id: parseInt(id) },
     });
 
     if (!blog) {
-      res.status(404).json({ message: 'Blog not found' });
+      res.status(404).json({ message: "Blog not found" });
       return;
     }
 
     // Make sure user is the blog owner
     if (blog.authorId !== req.user.id) {
-      res.status(401).json({ message: 'Not authorized to update this blog' });
+      res.status(401).json({ message: "Not authorized to update this blog" });
       return;
     }
 
@@ -164,14 +165,14 @@ export const updateBlog = async (req, res) => {
         content,
         featuredImage,
         category,
-        published
-      }
+        published,
+      },
     });
 
     res.json(updatedBlog);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -182,29 +183,29 @@ export const deleteBlog = async (req, res) => {
 
     // Check if blog exists
     const blog = await prisma.blog.findUnique({
-      where: { id: parseInt(id) }
+      where: { id: parseInt(id) },
     });
 
     if (!blog) {
-      res.status(404).json({ message: 'Blog not found' });
+      res.status(404).json({ message: "Blog not found" });
       return;
     }
 
     // Make sure user is the blog owner
     if (blog.authorId !== req.user.id) {
-      res.status(401).json({ message: 'Not authorized to delete this blog' });
+      res.status(401).json({ message: "Not authorized to delete this blog" });
       return;
     }
 
     // Delete the blog
     await prisma.blog.delete({
-      where: { id: parseInt(id) }
+      where: { id: parseInt(id) },
     });
 
-    res.json({ message: 'Blog removed' });
+    res.json({ message: "Blog removed" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -217,11 +218,11 @@ export const toggleLike = async (req, res) => {
 
     // Check if blog exists
     const blog = await prisma.blog.findUnique({
-      where: { id: blogId }
+      where: { id: blogId },
     });
 
     if (!blog) {
-      res.status(404).json({ message: 'Blog not found' });
+      res.status(404).json({ message: "Blog not found" });
       return;
     }
 
@@ -230,9 +231,9 @@ export const toggleLike = async (req, res) => {
       where: {
         userId_blogId: {
           userId,
-          blogId
-        }
-      }
+          blogId,
+        },
+      },
     });
 
     if (existingLike) {
@@ -241,29 +242,29 @@ export const toggleLike = async (req, res) => {
         where: {
           userId_blogId: {
             userId,
-            blogId
-          }
-        }
+            blogId,
+          },
+        },
       });
-      
+
       res.json({ liked: false });
     } else {
       // User hasn't liked the blog yet, so add a like
       await prisma.like.create({
         data: {
           user: {
-            connect: { id: userId }
+            connect: { id: userId },
           },
           blog: {
-            connect: { id: blogId }
-          }
-        }
+            connect: { id: blogId },
+          },
+        },
       });
-      
+
       res.json({ liked: true });
     }
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 };

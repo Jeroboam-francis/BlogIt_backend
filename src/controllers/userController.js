@@ -8,6 +8,11 @@ export const getUserProfile = async (req, res) => {
   try {
     const { id } = req.params;
 
+    // Validate and parse ID
+    if (!id || isNaN(parseInt(id))) {
+      return res.status(400).json({ message: "Invalid user ID" });
+    }
+
     const user = await prisma.user.findUnique({
       where: { id: parseInt(id) },
       select: {
