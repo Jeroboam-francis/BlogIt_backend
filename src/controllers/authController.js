@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 // Generate JWT
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || '1h',
+    expiresIn: process.env.JWT_EXPIRES_IN || "1h",
   });
 };
 
@@ -15,7 +15,10 @@ const generateToken = (id) => {
 export const register = async (req, res) => {
   try {
     const { firstName, lastName, email, username, password } = req.body;
-
+    
+    if (!firstName || !lastName || !email || !username || !password) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
     // Check if user exists
     const userExists = await prisma.user.findFirst({
       where: {
@@ -56,7 +59,9 @@ export const register = async (req, res) => {
       res.status(400).json({ message: "Invalid user data" });
     }
   } catch (error) {
-    console.error(error);
+    // console.error(error);
+    // console.error("Error during registration:", error);
+    console.error("Error during registration:", error.message, error.stack);
     res.status(500).json({ message: "Server error" });
   }
 };
